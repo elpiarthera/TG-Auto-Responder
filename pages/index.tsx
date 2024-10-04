@@ -1,16 +1,9 @@
 import React from 'react'
 import { useRouter } from 'next/router'
-import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageCircle } from 'lucide-react'
 import { useAuth } from '@/lib/hooks/useAuth'
-
-const Card = dynamic(() => import('@/components/ui/card').then(mod => mod.Card))
-const CardContent = dynamic(() => import('@/components/ui/card').then(mod => mod.CardContent))
-const CardDescription = dynamic(() => import('@/components/ui/card').then(mod => mod.CardDescription))
-const CardFooter = dynamic(() => import('@/components/ui/card').then(mod => mod.CardFooter))
-const CardHeader = dynamic(() => import('@/components/ui/card').then(mod => mod.CardHeader))
-const CardTitle = dynamic(() => import('@/components/ui/card').then(mod => mod.CardTitle))
 
 export default function Home() {
   const router = useRouter()
@@ -22,7 +15,7 @@ export default function Home() {
   }
 
   if (loading) {
-    return <div className="flex-center min-h-screen">Loading...</div>
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
   }
 
   if (user) {
@@ -31,8 +24,8 @@ export default function Home() {
   }
 
   return (
-    <div className="flex-center min-h-screen bg-background">
-      <Card className="w-[350px] card-hover">
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <Card className="w-[350px]">
         <CardHeader>
           <CardTitle className="text-gradient">Welcome to TG Auto Responder</CardTitle>
           <CardDescription>Sign in to manage your auto-response settings</CardDescription>

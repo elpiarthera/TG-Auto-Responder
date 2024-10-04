@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import Image from 'next/image' // Add this import
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,12 +9,9 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useAppContext } from '@/lib/context/AppContext'
 import { getUserSettings, updateUserSettings } from '@/lib/utils/supabaseHelpers'
 import { toast } from 'react-toastify'
-import dynamic from 'next/dynamic'
 
-const ComplexChart = dynamic(() => import('@/components/ComplexChart'), {
-  loading: () => <p>Loading chart...</p>,
-  ssr: false // If the chart library doesn't support SSR
-})
+// Remove the dynamic import for ComplexChart if it's not being used
+// If you need it later, make sure the component exists before importing
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -62,16 +59,18 @@ export default function Dashboard() {
     <Card>
       <CardHeader>
         <CardTitle>Auto Responder Settings</CardTitle>
-        {user && user.profileImageUrl && (
+        {user.user_metadata && (
           <div className="flex items-center space-x-4">
-            <Image
-              src={user.profileImageUrl}
-              alt={`${user.name}'s profile`}
-              width={50}
-              height={50}
-              className="rounded-full"
-            />
-            <span>{user.name}</span>
+            {user.user_metadata.avatar_url && (
+              <Image
+                src={user.user_metadata.avatar_url}
+                alt={`${user.user_metadata.full_name || 'User'}'s profile`}
+                width={50}
+                height={50}
+                className="rounded-full"
+              />
+            )}
+            <span>{user.user_metadata.full_name || user.email}</span>
           </div>
         )}
       </CardHeader>
@@ -93,7 +92,7 @@ export default function Dashboard() {
             />
             <Label htmlFor="responder-active">Activate Auto Responder</Label>
           </div>
-          <Button onClick={handleSaveSettings}>Save Settings</Button>
+          <Button onClick={handleSaveSettings} className="btn-primary">Save Settings</Button>
         </div>
       </CardContent>
     </Card>

@@ -34,8 +34,9 @@
       "@/*": ["./*"]
     },
     "baseUrl": ".",
-    "types": ["node"]
+    "types": ["node", "react"],
+    "jsxImportSource": "react"
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "docs"]
+  "exclude": ["node_modules"]
 }
