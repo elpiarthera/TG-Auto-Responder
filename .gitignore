@@ -23,7 +23,8 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env
+.env.local
 
 # vercel
 .vercel
@@ -37,3 +38,13 @@ next-env.d.ts
 *.pyc
 __pycache__/
 get-pip.py
+
+# Ignore JavaScript files in TypeScript projects
+*.js
+*.jsx
+!next.config.js
+!postcss.config.js
+!tailwind.config.js
+
+# Keep any other necessary JavaScript files
+!your-necessary-js-file.js

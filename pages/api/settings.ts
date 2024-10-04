@@ -1,6 +1,38 @@
-import type { NextApiRequest, NextApiResponse } from "next";
+import { NextApiRequest, NextApiResponse } from 'next'
+import nc from 'next-connect'
+import { cors, runMiddleware, rateLimiterMiddleware } from '../../lib/middleware'
+import { supabase } from '../../lib/supabaseClient'
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Handle settings API logic here
-  res.status(200).json({ message: "Settings API route" });
-}
+const handler = nc<NextApiRequest, NextApiResponse>()
+  .use(async (req, res, next) => {
+    await runMiddleware(req, res, cors)
+    if (await rateLimiterMiddleware(req, res)) {
+      next()
+    }
+  })
+  .get(async (req, res) => {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .select('*')
+      .single()
+
+    if (error) {
+      return res.status(500).json({ error: error.message })
+    }
+
+    return res.status(200).json(data)
+  })
+  .post(async (req, res) => {
+    const { data, error } = await supabase
+      .from('user_settings')
+      .upsert(req.body)
+      .single()
+
+    if (error) {
+      return res.status(500).json({ error: error.message })
+    }
+
+    return res.status(200).json(data)
+  })
+
+export default handler

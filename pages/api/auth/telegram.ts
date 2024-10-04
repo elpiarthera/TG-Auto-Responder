@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import crypto from "crypto";
 import { supabase } from "../../../lib/supabaseClient";
+import { verifyTelegramHash } from "../../../lib/utils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -8,27 +8,16 @@ export default async function handler(
 ) {
   const telegramData = req.query as Record<string, string>;
 
-  // Step 1: Extract relevant data
+  // Extract relevant data
   const { hash, ...userDataFromTelegram } = telegramData;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const secret = crypto
-    .createHash("sha256")
-    .update(botToken || "", "utf8")
-    .digest();
 
-  // Step 2: Build the string to verify against the hash
-  const checkString = Object.keys(userDataFromTelegram)
-    .sort()
-    .map((key) => `${key}=${userDataFromTelegram[key]}`)
-    .join("\n");
+  if (!botToken) {
+    return res.status(500).json({ message: "Server configuration error" });
+  }
 
-  // Step 3: Generate the hash and compare
-  const computedHash = crypto
-    .createHmac("sha256", secret)
-    .update(checkString)
-    .digest("hex");
-
-  if (computedHash === hash) {
+  // Verify the hash
+  if (verifyTelegramHash(userDataFromTelegram, hash, botToken)) {
     // Success: user is authenticated
     const { id, first_name, last_name, username, photo_url } =
       userDataFromTelegram;
@@ -72,8 +61,8 @@ export default async function handler(
     // Set a session cookie
     res.setHeader(
       "Set-Cookie",
-      `session=${id}; HttpOnly; Path=/; Max-Age=2592000`,
-    ); // 30 days
+      `session=${id}; HttpOnly; Path=/; Max-Age=2592000`, // 30 days
+    );
 
     // Redirect to dashboard
     res.writeHead(302, { Location: "/dashboard" });
