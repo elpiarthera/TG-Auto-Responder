@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { TelegramUserData } from '@/types/userSettings'
 import { verifyTelegramHash } from './index'
-import { logger } from './logger'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

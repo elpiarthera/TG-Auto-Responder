@@ -54,3 +54,6 @@ get-pip.py
 
 # Logs
 *.log
+
+# Ignore all .js files in the pages/api directory
+pages/api/**/*.js
