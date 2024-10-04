@@ -1,25 +1,23 @@
-@layer components {
-  .btn-primary {
-    @apply px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors duration-300;
-  }
+.btn-primary {
+  @apply px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors duration-300;
+}
 
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
-  }
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+}
 
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary font-bold;
-  }
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary font-bold;
+}
 
-  .input-base {
-    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm;
-  }
+.input-base {
+  @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm;
+}
 
-  .label-base {
-    @apply text-sm font-medium leading-none;
-  }
+.label-base {
+  @apply text-sm font-medium leading-none;
+}
 
-  .switch-base {
-    @apply inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent;
-  }
+.switch-base {
+  @apply inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent;
 }
