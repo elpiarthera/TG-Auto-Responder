@@ -1,12 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
-import { verifyTelegramHash } from '@/lib/utils'; // Updated import path
-import { handleTelegramUserData, TelegramUserData } from '@/shared/utils/telegramUtils';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-);
+import { verifyTelegramHash } from '@/lib/utils';
+import { handleTelegramUserData } from '@/lib/services/supabaseService';
+import { TelegramUserData } from '@/types/userSettings';
 
 export default async function handler(
   req: NextApiRequest,
@@ -14,7 +9,6 @@ export default async function handler(
 ) {
   const telegramData = req.query as Record<string, string>;
 
-  // Extract relevant data
   const { hash, ...userDataFromTelegram } = telegramData;
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -22,10 +16,8 @@ export default async function handler(
     return res.status(500).json({ message: "Server configuration error" });
   }
 
-  // Verify the hash
   if (verifyTelegramHash(userDataFromTelegram, hash, botToken)) {
     try {
-      // Cast userDataFromTelegram to TelegramUserData
       const userData: TelegramUserData = {
         id: userDataFromTelegram.id,
         first_name: userDataFromTelegram.first_name,
@@ -33,15 +25,13 @@ export default async function handler(
         username: userDataFromTelegram.username,
         photo_url: userDataFromTelegram.photo_url,
       };
-      await handleTelegramUserData(userData, supabase);
+      await handleTelegramUserData(userData);
 
-      // Set a session cookie
       res.setHeader(
         "Set-Cookie",
-        `session=${userData.id}; HttpOnly; Path=/; Max-Age=2592000`, // 30 days
+        `session=${userData.id}; HttpOnly; Path=/; Max-Age=2592000`,
       );
 
-      // Redirect to dashboard
       res.writeHead(302, { Location: "/dashboard" });
       res.end();
     } catch (error) {
@@ -49,7 +39,6 @@ export default async function handler(
       res.status(500).json({ message: "Error processing user data" });
     }
   } else {
-    // Error: hash does not match
     res.status(401).json({ message: "Authentication failed" });
   }
 }

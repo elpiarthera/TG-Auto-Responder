@@ -51,4 +51,6 @@ get-pip.py
 
 # Keep any other necessary JavaScript files
 !your-necessary-js-file.js
-*storybook.log
+
+# Logs
+*.log

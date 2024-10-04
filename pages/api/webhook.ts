@@ -1,19 +1,23 @@
 import { NextApiRequest, NextApiResponse } from 'next'
-import nc from 'next-connect'
-import { cors, runMiddleware, rateLimiterMiddleware } from '../../lib/middleware'
+import { createRouter } from 'next-connect'
+import { cors, runMiddleware, rateLimiterMiddleware } from '@/lib/middleware'
 import { Telegraf } from 'telegraf'
-import { supabase } from '../../lib/supabaseClient'
+import { supabase } from '@/lib/supabaseClient'
+import { AppError, errorResponse } from '@/lib/utils/errors'
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN as string)
 
-const handler = nc<NextApiRequest, NextApiResponse>()
-  .use(async (req, res, next) => {
-    await runMiddleware(req, res, cors)
-    if (await rateLimiterMiddleware(req, res)) {
-      next()
-    }
-  })
-  .post(async (req, res) => {
+const handler = createRouter<NextApiRequest, NextApiResponse>()
+
+handler.use(async (req: NextApiRequest, res: NextApiResponse, next) => {
+  await runMiddleware(req, res, cors)
+  if (await rateLimiterMiddleware(req, res)) {
+    next()
+  }
+})
+
+handler.post(async (req: NextApiRequest, res: NextApiResponse) => {
+  try {
     const { message } = req.body
 
     if (message && message.text) {
@@ -24,8 +28,7 @@ const handler = nc<NextApiRequest, NextApiResponse>()
         .single()
 
       if (error) {
-        console.error('Error fetching user settings:', error)
-        return res.status(500).json({ error: 'Internal Server Error' })
+        throw new AppError(500, 'Error fetching user settings')
       }
 
       if (settings && settings.message_template) {
@@ -34,6 +37,9 @@ const handler = nc<NextApiRequest, NextApiResponse>()
     }
 
     res.status(200).json({ ok: true })
-  })
+  } catch (error) {
+    errorResponse(res, error as Error | AppError)
+  }
+})
 
 export default handler

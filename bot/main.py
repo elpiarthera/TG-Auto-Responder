@@ -4,7 +4,8 @@ from pyrogram import Client, filters
 from supabase import create_client, Client as SupabaseClient
 from dotenv import load_dotenv
 from typing import Dict, Any
-from bot.utils import handle_telegram_user_data, TelegramUserData
+from utils.telegram_utils import handle_telegram_user_data, TelegramUserData
+import re
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -12,6 +13,15 @@ logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
+
+class EnvironmentError(Exception):
+    pass
+
+class SupabaseError(Exception):
+    pass
+
+class PyrogramError(Exception):
+    pass
 
 def validate_env_vars() -> None:
     required_vars = [
@@ -24,6 +34,18 @@ def validate_env_vars() -> None:
     missing_vars = [var for var in required_vars if not os.getenv(var)]
     if missing_vars:
         raise EnvironmentError(f"Missing required environment variables: {', '.join(missing_vars)}")
+    
+    # Validate SUPABASE_KEY format (assuming it should be a long alphanumeric string)
+    supabase_key = os.getenv("SUPABASE_KEY")
+    if not re.match(r'^[a-zA-Z0-9]{50,}$', supabase_key):
+        raise EnvironmentError("SUPABASE_KEY format is invalid")
+    
+    # Validate TELEGRAM_BOT_TOKEN format
+    telegram_token = os.getenv("TELEGRAM_BOT_TOKEN")
+    if not re.match(r'^\d+:[a-zA-Z0-9_-]{35}$', telegram_token):
+        raise EnvironmentError("TELEGRAM_BOT_TOKEN format is invalid")
+
+    # Add more specific checks for other variables as needed
 
 try:
     validate_env_vars()
@@ -36,9 +58,9 @@ try:
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_KEY")
     if not supabase_url or not supabase_key:
-        raise ValueError("Supabase URL or key is missing")
+        raise SupabaseError("Supabase URL or key is missing")
     supabase: SupabaseClient = create_client(supabase_url, supabase_key)
-except ValueError as e:
+except SupabaseError as e:
     logger.error(f"Supabase client initialization failed: {str(e)}")
     raise
 except Exception as e:
@@ -53,7 +75,7 @@ try:
         api_hash=os.getenv("TELEGRAM_API_HASH"),
         bot_token=os.getenv("TELEGRAM_BOT_TOKEN")
     )
-except ValueError as e:
+except PyrogramError as e:
     logger.error(f"Pyrogram client initialization failed: {str(e)}")
     raise
 except Exception as e:

@@ -1,13 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import winston from 'winston'
+import { TelegramUserData, UserSettings } from '@/types/userSettings'
 
-/**
- * Logger configuration for Supabase helper functions.
- */
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.json(),
-  defaultMeta: { service: 'supabase-helper' },
+  defaultMeta: { service: 'supabase-service' },
   transports: [
     new winston.transports.Console(),
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
@@ -15,20 +13,11 @@ const logger = winston.createLogger({
   ],
 })
 
-/**
- * Supabase client instance.
- */
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-/**
- * Fetches user settings from Supabase.
- * @param {string} userId - The ID of the user whose settings are being fetched.
- * @returns {Promise<object>} The user's settings.
- * @throws {Error} If there's an error fetching the settings.
- */
 export async function getUserSettings(userId: string) {
   try {
     const { data, error } = await supabase
@@ -46,14 +35,7 @@ export async function getUserSettings(userId: string) {
   }
 }
 
-/**
- * Updates user settings in Supabase.
- * @param {string} userId - The ID of the user whose settings are being updated.
- * @param {object} settings - The new settings to be applied.
- * @returns {Promise<object>} The updated user settings.
- * @throws {Error} If there's an error updating the settings.
- */
-export async function updateUserSettings(userId: string, settings: any) {
+export async function updateUserSettings(userId: string, settings: Partial<UserSettings>) {
   try {
     const { data, error } = await supabase
       .from('user_settings')
@@ -66,5 +48,31 @@ export async function updateUserSettings(userId: string, settings: any) {
   } catch (error) {
     logger.error('Error updating user settings:', error)
     throw new Error('Failed to update user settings')
+  }
+}
+
+export async function handleTelegramUserData(userData: TelegramUserData) {
+  try {
+    // Store or update user in Supabase
+    const { error: userError } = await supabase
+      .from('users')
+      .upsert(userData)
+
+    if (userError) throw new Error(`Error storing user: ${userError.message}`)
+
+    // Create or update user settings
+    const { error: settingsError } = await supabase
+      .from('user_settings')
+      .upsert({
+        user_id: userData.id,
+        is_responder_active: false, // default value
+        message_template: '', // default value
+      })
+
+    if (settingsError) throw new Error(`Error storing user settings: ${settingsError.message}`)
+
+  } catch (error) {
+    logger.error('Error handling Telegram user data:', error)
+    throw error
   }
 }

@@ -7,7 +7,7 @@ const cors = Cors({
 })
 
 const rateLimiter = new RateLimiterMemory({
-  points: 5, // 5 requests
+  points: 10, // 10 requests
   duration: 1, // per 1 second
 })
 
@@ -22,14 +22,14 @@ export function runMiddleware(req: NextApiRequest, res: NextApiResponse, fn: Fun
   })
 }
 
-export async function rateLimiterMiddleware(req: NextApiRequest, res: NextApiResponse) {
+export async function rateLimiterMiddleware(req: NextApiRequest, res: NextApiResponse): Promise<boolean> {
   try {
     await rateLimiter.consume(req.socket.remoteAddress!)
+    return true
   } catch {
     res.status(429).json({ message: 'Too Many Requests' })
     return false
   }
-  return true
 }
 
 export { cors }

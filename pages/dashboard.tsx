@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import Image from 'next/image' // Add this import
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -8,6 +9,12 @@ import { useAuth } from '@/lib/hooks/useAuth'
 import { useAppContext } from '@/lib/context/AppContext'
 import { getUserSettings, updateUserSettings } from '@/lib/utils/supabaseHelpers'
 import { toast } from 'react-toastify'
+import dynamic from 'next/dynamic'
+
+const ComplexChart = dynamic(() => import('@/components/ComplexChart'), {
+  loading: () => <p>Loading chart...</p>,
+  ssr: false // If the chart library doesn't support SSR
+})
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -55,6 +62,18 @@ export default function Dashboard() {
     <Card>
       <CardHeader>
         <CardTitle>Auto Responder Settings</CardTitle>
+        {user && user.profileImageUrl && (
+          <div className="flex items-center space-x-4">
+            <Image
+              src={user.profileImageUrl}
+              alt={`${user.name}'s profile`}
+              width={50}
+              height={50}
+              className="rounded-full"
+            />
+            <span>{user.name}</span>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
