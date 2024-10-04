@@ -1,19 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import winston from 'winston'
-
-/**
- * Logger configuration for Supabase helper functions.
- */
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.json(),
-  defaultMeta: { service: 'supabase-helper' },
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
-})
+import { logger } from './logger'
 
 /**
  * Supabase client instance.
