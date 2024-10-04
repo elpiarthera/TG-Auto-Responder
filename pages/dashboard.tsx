@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { useAuth } from '@/lib/hooks/useAuth'
 import { useAppContext } from '@/lib/context/AppContext'
-import { getUserSettings, updateUserSettings } from '@/lib/utils/supabaseHelpers'
+import { getUserSettings, updateUserSettings } from '@/lib/services/supabaseService'
 import { toast } from 'react-toastify'
 
 // Remove the dynamic import for ComplexChart if it's not being used
@@ -19,18 +19,19 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) {
-      fetchUserSettings()
+      loadUserSettings()
     }
   }, [user])
 
-  const fetchUserSettings = async () => {
+  const loadUserSettings = async () => {
     if (user) {
       try {
         const settings = await getUserSettings(user.id)
-        setAutoResponse(settings.message_template)
-        setIsResponderActive(settings.is_responder_active)
+        if (settings) {
+          setAutoResponse(settings.message_template || '')
+          setIsResponderActive(settings.is_responder_active || false)
+        }
       } catch (error) {
-        console.error('Error fetching user settings:', error)
         toast.error('Failed to load settings')
       }
     }
@@ -45,7 +46,6 @@ export default function Dashboard() {
         })
         toast.success('Settings saved successfully')
       } catch (error) {
-        console.error('Error saving settings:', error)
         toast.error('Failed to save settings')
       }
     }
@@ -59,20 +59,7 @@ export default function Dashboard() {
     <Card>
       <CardHeader>
         <CardTitle>Auto Responder Settings</CardTitle>
-        {user.user_metadata && (
-          <div className="flex items-center space-x-4">
-            {user.user_metadata.avatar_url && (
-              <Image
-                src={user.user_metadata.avatar_url}
-                alt={`${user.user_metadata.full_name || 'User'}'s profile`}
-                width={50}
-                height={50}
-                className="rounded-full"
-              />
-            )}
-            <span>{user.user_metadata.full_name || user.email}</span>
-          </div>
-        )}
+        <CardDescription>Configure your auto-response message and activation status.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -92,9 +79,11 @@ export default function Dashboard() {
             />
             <Label htmlFor="responder-active">Activate Auto Responder</Label>
           </div>
-          <Button onClick={handleSaveSettings} className="btn-primary">Save Settings</Button>
         </div>
       </CardContent>
+      <CardFooter>
+        <Button onClick={handleSaveSettings}>Save Settings</Button>
+      </CardFooter>
     </Card>
   )
 }
