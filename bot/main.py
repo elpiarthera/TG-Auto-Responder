@@ -3,6 +3,8 @@ import logging
 from pyrogram import Client, filters
 from supabase import create_client, Client as SupabaseClient
 from dotenv import load_dotenv
+from typing import Dict, Any
+from bot.utils import handle_telegram_user_data, TelegramUserData
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -11,7 +13,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables from .env file
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-def validate_env_vars():
+def validate_env_vars() -> None:
     required_vars = [
         "SUPABASE_URL",
         "SUPABASE_KEY",
@@ -33,50 +35,62 @@ except EnvironmentError as e:
 try:
     supabase_url = os.getenv("SUPABASE_URL")
     supabase_key = os.getenv("SUPABASE_KEY")
+    if not supabase_url or not supabase_key:
+        raise ValueError("Supabase URL or key is missing")
     supabase: SupabaseClient = create_client(supabase_url, supabase_key)
+except ValueError as e:
+    logger.error(f"Supabase client initialization failed: {str(e)}")
+    raise
 except Exception as e:
-    logger.error(f"Failed to initialize Supabase client: {str(e)}")
+    logger.error(f"Unexpected error during Supabase client initialization: {str(e)}")
     raise
 
 # Initialize Pyrogram client
 try:
-    api_id = os.getenv("TELEGRAM_API_ID")
-    api_hash = os.getenv("TELEGRAM_API_HASH")
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
-    app = Client("auto_responder_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+    app = Client(
+        "auto_responder_bot",
+        api_id=os.getenv("TELEGRAM_API_ID"),
+        api_hash=os.getenv("TELEGRAM_API_HASH"),
+        bot_token=os.getenv("TELEGRAM_BOT_TOKEN")
+    )
+except ValueError as e:
+    logger.error(f"Pyrogram client initialization failed: {str(e)}")
+    raise
 except Exception as e:
-    logger.error(f"Failed to initialize Pyrogram client: {str(e)}")
+    logger.error(f"Unexpected error during Pyrogram client initialization: {str(e)}")
     raise
 
 @app.on_message(filters.private)
-async def auto_respond(client, message):
-    user_id = str(message.from_user.id)
-    
+async def handle_message(client: Client, message: Dict[str, Any]) -> None:
     try:
-        # Fetch user settings from Supabase
-        response = supabase.table("user_settings").select("*").eq("user_id", user_id).execute()
+        user = message.from_user
+        user_data: TelegramUserData = {
+            "id": str(user.id),
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "username": user.username,
+            "photo_url": user.photo.big_file_id if user.photo else None
+        }
+        await handle_telegram_user_data(user_data, supabase)
         
+        # Fetch user settings from Supabase
+        response = supabase.table("user_settings").select("*").eq("user_id", user.id).execute()
         if response.data:
             user_settings = response.data[0]
             if user_settings["is_responder_active"]:
-                template = user_settings["message_template"]
-                if template:
-                    await message.reply(template)
-                else:
-                    logger.warning(f"Active responder for user {user_id} has an empty message template")
+                await message.reply(user_settings["message_template"])
         else:
-            logger.info(f"No settings found for user {user_id}")
+            logger.warning(f"No settings found for user {user.id}")
+    except AttributeError as e:
+        logger.error(f"Error accessing message attributes: {str(e)}")
     except Exception as e:
-        logger.error(f"Error processing message for user {user_id}: {str(e)}")
-
-async def handle_error(client, message, e):
-    error_message = f"An error occurred: {str(e)}"
-    logger.error(error_message)
-    await message.reply("Sorry, an error occurred while processing your message. Please try again later.")
+        logger.error(f"Unexpected error in handle_message: {str(e)}")
 
 if __name__ == "__main__":
     try:
         logger.info("Starting the bot...")
         app.run()
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
     except Exception as e:
-        logger.critical(f"Critical error running the bot: {str(e)}")
+        logger.error(f"Unexpected error occurred: {str(e)}")

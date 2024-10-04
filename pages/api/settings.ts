@@ -10,7 +10,7 @@ const handler = nc<NextApiRequest, NextApiResponse>()
       next()
     }
   })
-  .get(async (req, res) => {
+  .get(async (_, res) => {
     const { data, error } = await supabase
       .from('user_settings')
       .select('*')
