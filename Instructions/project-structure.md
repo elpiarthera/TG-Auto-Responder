@@ -1,22 +1,22 @@
 telegram-auto-responder/
 ├── pages/
-│   ├── api/
-│   │   ├── templates.ts
-│   │   └── settings.ts
-│   ├── _app.tsx
-│   ├── index.tsx
-│   └── dashboard.tsx
+│ ├── api/
+│ │ ├── templates.ts
+│ │ └── settings.ts
+│ ├── \_app.tsx
+│ ├── index.tsx
+│ └── dashboard.tsx
 ├── components/
-│   ├── AutoResponderToggle.tsx
-│   ├── MessageTemplateInput.tsx
-│   └── SaveSettingsButton.tsx
+│ ├── AutoResponderToggle.tsx
+│ ├── MessageTemplateInput.tsx
+│ └── SaveSettingsButton.tsx
 ├── lib/
-│   └── supabaseClient.ts
+│ └── supabaseClient.ts
 ├── styles/
-│   └── globals.css
+│ └── globals.css
 ├── public/
 ├── bot/
-│   └── main.py
+│ └── main.py
 ├── .env.local
 ├── next.config.js
 ├── package.json

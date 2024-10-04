@@ -14,17 +14,20 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 ## Tech Stack
 
 ### Frontend
+
 - **Framework**: Next.js (React-based, for both frontend and server-side rendering)
 - **UI**: Leveraging v0.dev and shadcn/ui for quick and efficient UI generation.
 - **CSS Framework**: Tailwind CSS for styling.
 - **Deployment**: Vercel (for deploying the app with server-side rendering support).
 
 ### Backend
+
 - **Database**: Supabase (Postgres-based, with built-in auth and database management).
 - **Telegram Bot**: Pyrogram (Python-based framework to interact with the Telegram API).
 - **Bot Deployment**: Heroku (or similar cloud service) for bot deployment.
 
 ### Authentication
+
 - **Auth Service**: Clerk (for OAuth authentication with Telegram).
 
 ## Tools and Services
@@ -41,6 +44,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 ## Key Features and Requirements
 
 ### 1. User Authentication
+
 - **Goal**: Allow users to log in using their Telegram account.
 - **Framework**: Clerk for OAuth with Telegram.
 - **Functionality**:
@@ -49,6 +53,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
   - **Logout**: Users can log out, and Clerk will clear the session.
 
 ### 2. Auto-Responder Dashboard
+
 - **Goal**: Provide users with a UI to configure the auto-responder.
 - **Framework**: Next.js (React-based)
 - **UI Generation**: Leverage v0.dev for quick component creation.
@@ -59,6 +64,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
   - **Save Button**: Save changes to the user's auto-responder settings in Supabase.
 
 ### 3. Supabase Integration
+
 - **Goal**: Store and manage user settings (auto-responder status and message template).
 - **Framework**: Supabase (Postgres and API management).
 - **Data to Store**:
@@ -71,6 +77,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
   - POST /api/settings: Update the auto-responder status.
 
 ### 4. Telegram Bot Integration
+
 - **Goal**: The bot will respond automatically to incoming messages based on user settings.
 - **Framework**: Pyrogram (Python framework for interacting with the Telegram API).
 - **Functionality**:
@@ -85,6 +92,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 ### Frontend Components
 
 1. **Login Page**:
+
    - **Dependencies**:
      - Clerk (@clerk/nextjs): To embed the login form.
      - Tailwind CSS: For responsive and clean UI design.
@@ -105,6 +113,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 ### API and Backend
 
 1. **Supabase API Integration**:
+
    - **Dependencies**:
      - Supabase (@supabase/supabase-js): For API calls to handle user data.
    - **API Routes**:
@@ -125,19 +134,23 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 ## Estimated Time Breakdown
 
 1. **Supabase Setup**: 2–3 hours
+
    - Set up project, database, and tables.
    - Create API routes for saving and fetching settings.
 
 2. **Clerk Authentication Integration**: 1 hour
+
    - Integrate Clerk for Telegram OAuth.
    - Add session management.
 
 3. **Frontend Development**: 2–3 hours
+
    - Build login and dashboard pages with v0.dev for quick UI component generation.
    - Style components with Tailwind CSS.
    - Integrate Supabase to fetch and save user settings.
 
 4. **Telegram Bot Development**: 2–3 hours
+
    - Set up Pyrogram.
    - Write the logic to fetch user settings and respond to messages.
    - Deploy the bot on Heroku.
@@ -148,6 +161,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 ## Final Dependencies List
 
 ### Frontend (Next.js)
+
 - next: Next.js framework for React.
 - @supabase/supabase-js: Supabase client for API integration.
 - @clerk/nextjs: Clerk for authentication.
@@ -156,6 +170,7 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 - tailwindcss: CSS framework for styling.
 
 ### Backend (Supabase & Pyrogram)
+
 - Supabase: Hosted Postgres database with built-in API.
 - Pyrogram: Python framework for Telegram Bot API.
 - supabase-py: Python client for interacting with Supabase.

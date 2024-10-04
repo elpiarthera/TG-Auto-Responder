@@ -1,13 +1,16 @@
-import type { NextPage } from 'next'
-import Head from 'next/head'
-import React from 'react';
+import type { NextPage } from "next";
+import Head from "next/head";
+import React from "react";
 
 const Dashboard: NextPage = () => {
   return (
     <div>
       <Head>
         <title>Dashboard - Telegram Auto Responder</title>
-        <meta name="description" content="Dashboard for Telegram Auto Responder" />
+        <meta
+          name="description"
+          content="Dashboard for Telegram Auto Responder"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -16,6 +19,6 @@ const Dashboard: NextPage = () => {
         {/* Add your dashboard content here */}
       </main>
     </div>
-  )
-}
-export default Dashboard
+  );
+};
+export default Dashboard;
