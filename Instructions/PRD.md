@@ -174,3 +174,102 @@ This document outlines the requirements for building a Telegram Auto-Responder m
 - Supabase: Hosted Postgres database with built-in API.
 - Pyrogram: Python framework for Telegram Bot API.
 - supabase-py: Python client for interacting with Supabase.
+
+## Appendix: Supabase Schema Migration for Clerk Integration
+
+This guide outlines the necessary schema changes in your Supabase database to align with Clerk authentication, where Clerk's `userId` becomes the primary identifier for users.
+
+**Important Assumptions:**
+*   You are transitioning to use Clerk's `userId` (a string, e.g., `user_123abc...`) as the primary key for user-related data.
+*   The following steps assume you are making these changes directly in the Supabase SQL editor or table editor.
+*   **Backup your data before making schema changes if you have existing user data you wish to preserve and migrate.** The steps below primarily focus on schema alteration for new data compatibility. Data migration is a more complex process.
+
+**Step 1: Modify the `users` Table**
+
+1.  **Navigate to your `users` table in the Supabase Dashboard.**
+2.  **Change the `id` column:**
+    *   **Current Type (Likely):** `bigint` or `numeric` (for Telegram numeric ID).
+    *   **New Type:** `TEXT` or `VARCHAR`. This column will now store Clerk's `userId`.
+    *   **Primary Key:** Ensure this `id` column remains the Primary Key.
+    *   If you are using the Supabase Table Editor, you might need to temporarily remove the Primary Key constraint, change the type, and then re-add the Primary Key constraint.
+3.  **Add a new column for the numeric Telegram ID (Recommended):**
+    *   **Column Name:** `telegram_numeric_id` (or similar).
+    *   **Type:** `BIGINT` (if Telegram IDs are numbers) or `TEXT`.
+    *   **Constraints:** Consider adding a `UNIQUE` constraint to this column if you want to ensure no two Clerk users can be associated with the same numeric Telegram ID.
+    *   This column will store the original numeric ID from Telegram, which can be useful for linking or for the Pyrogram bot.
+4.  **Review other columns:** Ensure `first_name`, `last_name`, `username`, `photo_url` are of type `TEXT` or `VARCHAR` and are nullable as needed.
+
+**Example SQL (Illustrative - adapt carefully):**
+```sql
+-- Backup your 'users' table first!
+-- Example: CREATE TABLE users_backup AS TABLE users;
+
+-- If you need to remove PK to change type (depends on Supabase UI/SQL behavior)
+-- ALTER TABLE users DROP CONSTRAINT users_pkey;
+
+-- Change id column type
+ALTER TABLE users ALTER COLUMN id TYPE TEXT;
+
+-- Re-add PK if dropped
+-- ALTER TABLE users ADD PRIMARY KEY (id);
+
+-- Add new column for numeric Telegram ID
+ALTER TABLE users ADD COLUMN telegram_numeric_id BIGINT UNIQUE;
+-- Or TEXT if Telegram ID is treated as string:
+-- ALTER TABLE users ADD COLUMN telegram_numeric_id TEXT UNIQUE;
+
+-- Ensure other profile columns are appropriate
+ALTER TABLE users ALTER COLUMN first_name TYPE TEXT;
+ALTER TABLE users ALTER COLUMN last_name TYPE TEXT;
+ALTER TABLE users ALTER COLUMN username TYPE TEXT;
+ALTER TABLE users ALTER COLUMN photo_url TYPE TEXT;
+```
+
+**Step 2: Modify the `user_settings` Table**
+
+1.  **Navigate to your `user_settings` table.**
+2.  **Change the `user_id` column:**
+    *   **Current Type (Likely):** `bigint` or `numeric`.
+    *   **New Type:** `TEXT` or `VARCHAR`. This will store Clerk's `userId`.
+3.  **Primary Key / Unique Constraint:**
+    *   It's common for `user_id` in a settings table to be the Primary Key or at least have a `UNIQUE` constraint to ensure one settings row per user.
+4.  **Foreign Key Constraint:**
+    *   Remove any existing Foreign Key constraint on `user_id` that points to the old `users.id` (numeric).
+    *   Add a new Foreign Key constraint: `user_id` in `user_settings` should reference `id` in the `users` table (which is now Clerk's `userId`).
+    *   Ensure `ON DELETE CASCADE` or other appropriate actions are set if desired.
+5.  **Review other columns:** `is_responder_active` (BOOLEAN), `message_template` (TEXT) should be fine.
+
+**Example SQL (Illustrative - adapt carefully):**
+```sql
+-- Backup 'user_settings' table first!
+-- Example: CREATE TABLE user_settings_backup AS TABLE user_settings;
+
+-- Remove old FK constraint (get constraint name from Supabase dashboard)
+-- ALTER TABLE user_settings DROP CONSTRAINT <your_old_fk_constraint_name>;
+
+-- If user_id is PK and you need to drop to change type
+-- ALTER TABLE user_settings DROP CONSTRAINT user_settings_pkey;
+
+-- Change user_id column type
+ALTER TABLE user_settings ALTER COLUMN user_id TYPE TEXT;
+
+-- Re-add PK or UNIQUE constraint on user_id
+-- ALTER TABLE user_settings ADD PRIMARY KEY (user_id);
+-- or
+-- ALTER TABLE user_settings ADD CONSTRAINT unique_user_id UNIQUE (user_id);
+
+
+-- Add new FK constraint to users table (on Clerk userId)
+ALTER TABLE user_settings
+ADD CONSTRAINT fk_user_id
+FOREIGN KEY (user_id)
+REFERENCES users(id)
+ON DELETE CASCADE; -- Or your preferred ON DELETE action
+```
+
+**After Schema Changes:**
+*   The application code (which I will modify) will assume this new schema.
+*   Calls to `getUserSettings(clerkUserId)` and `updateUserSettings(clerkUserId, ...)` from the dashboard should now work with these tables.
+*   The logic for initially populating the `users` and `user_settings` tables after a new user signs up via Clerk will need to be updated (this will be part of my code changes).
+
+Please review these SQL commands carefully and adapt them to your exact table structure and constraint names. Using the Supabase Table Editor GUI might be safer if you are not comfortable with direct SQL execution.
