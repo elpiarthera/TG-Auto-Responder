@@ -17,16 +17,16 @@ export default function Profile() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center space-y-4">
-          {user.profileImageUrl && (
+          {user.user_metadata?.avatar_url && (
             <Image
-              src={user.profileImageUrl}
-              alt={`${user.name}'s profile`}
+              src={user.user_metadata.avatar_url}
+              alt={`${user.user_metadata?.full_name || user.user_metadata?.first_name || 'User'}'s profile`}
               width={100}
               height={100}
               className="rounded-full"
             />
           )}
-          <h2 className="text-2xl font-bold">{user.name}</h2>
+          <h2 className="text-2xl font-bold">{user.user_metadata?.full_name || user.user_metadata?.first_name}</h2>
           <p>{user.email}</p>
           {/* Add more user details as needed */}
         </div>

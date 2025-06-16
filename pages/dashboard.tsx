@@ -17,12 +17,6 @@ export default function Dashboard() {
   const { user } = useAuth()
   const { autoResponse, setAutoResponse, isResponderActive, setIsResponderActive } = useAppContext()
 
-  useEffect(() => {
-    if (user) {
-      loadUserSettings()
-    }
-  }, [user])
-
   const loadUserSettings = async () => {
     if (user) {
       try {
@@ -36,6 +30,12 @@ export default function Dashboard() {
       }
     }
   }
+
+  useEffect(() => {
+    if (user) {
+      loadUserSettings()
+    }
+  }, [user, loadUserSettings])
 
   const handleSaveSettings = async () => {
     if (user) {
