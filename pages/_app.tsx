@@ -5,15 +5,18 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { AppProvider } from '@/lib/context/AppContext'
 import { ThemeProvider } from '@/lib/hooks/useTheme'
+import { ClerkProvider } from "@clerk/nextjs";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ThemeProvider>
-      <AppProvider>
-        <Component {...pageProps} />
-        <ToastContainer />
-      </AppProvider>
-    </ThemeProvider>
+    <ClerkProvider {...pageProps}>
+      <ThemeProvider>
+        <AppProvider>
+          <Component {...pageProps} />
+          <ToastContainer />
+        </AppProvider>
+      </ThemeProvider>
+    </ClerkProvider>
   )
 }
 

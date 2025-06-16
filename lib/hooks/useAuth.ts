@@ -1,33 +1,54 @@
-import { useState, useEffect } from 'react'
-import { User } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabaseClient'
+import { useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      setLoading(false)
-    }
+      setLoading(true);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error fetching session:", error.message);
+        }
+        setUser(session?.user ?? null);
+      } catch (e: any) {
+        console.error("Exception fetching session:", e.message);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    fetchSession()
+    fetchSession();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null)
-        setLoading(false)
+      (_event, session) => {
+        setUser(session?.user ?? null);
       }
-    )
+    );
 
     return () => {
-      authListener.subscription.unsubscribe()
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
+    };
+  }, []);
+
+  const signOut = async () => {
+    setLoading(true);
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+    } catch (e: any) {
+      console.error("Exception during sign out:", e.message);
+    } finally {
+      setLoading(false);
     }
-  }, [])
+  };
 
-  const signOut = () => supabase.auth.signOut()
-
-  return { user, loading, signOut }
+  return { user, loading, signOut };
 }
