@@ -8,6 +8,7 @@ module.exports = {
     extend: {
       colors: {
         primary: '#3b82f6', // Example blue color
+        'primary-foreground': '#ffffff', // White color for text on primary background
       },
     },
   },
