@@ -37,7 +37,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Invalid request body: is_responder_active (boolean) and message_template (string) are required.' });
       }
 
-      await updateUserSettings(userId, { is_responder_active, message_template });
+      const trimmedTemplate = message_template.trim();
+      if (trimmedTemplate.length > 1000) { // Example length limit
+        logger.warn(`/api/settings: message_template too long for user ${userId}`);
+        return res.status(400).json({ error: 'Message template exceeds maximum length of 1000 characters.' });
+      }
+
+      await updateUserSettings(userId, { is_responder_active, message_template: trimmedTemplate });
       logger.info(`/api/settings: Successfully updated settings for user ${userId}`);
       return res.status(200).json({ message: 'Settings updated successfully' });
     } else {
@@ -46,15 +52,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
   } catch (error: any) {
-    logger.error(`/api/settings: Error processing request for user ${userId}:`, error);
-    // Check if error is from Supabase or elsewhere to customize message
+    // Log the full error for server-side debugging
+    logger.error(`/api/settings: Internal error for user ${userId}:`, error.message || error);
+
     let statusCode = 500;
     let message = 'Failed to process settings.';
-    if (error.message && error.message.toLowerCase().includes('failed to fetch')) { // Example check
+    if (error?.message?.toLowerCase().includes('failed to fetch')) {
         message = 'Failed to retrieve settings from database.';
-    } else if (error.message && error.message.toLowerCase().includes('failed to update')) {
+    } else if (error?.message?.toLowerCase().includes('failed to update')) {
         message = 'Failed to save settings to database.';
     }
-    return res.status(statusCode).json({ error: message, details: error.message });
+    // Do not send error.message or error.details to client
+    return res.status(statusCode).json({ error: message });
   }
 }
