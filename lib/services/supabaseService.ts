@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { TelegramUserData, UserSettings } from '@/types/userSettings'
+import { UserSettings } from '@/types/userSettings'
 import { logger } from '../utils/logger'
 
 const supabase = createClient(

@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react'
-import Image from 'next/image'
+import { useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,7 +16,7 @@ export default function Dashboard() {
   const { user } = useAuth()
   const { autoResponse, setAutoResponse, isResponderActive, setIsResponderActive } = useAppContext()
 
-  const loadUserSettings = async () => {
+  const loadUserSettings = useCallback(async () => {
     if (user) {
       try {
         const settings = await getUserSettings(user.id)
@@ -29,7 +28,7 @@ export default function Dashboard() {
         toast.error('Failed to load settings')
       }
     }
-  }
+  }, [user, setAutoResponse, setIsResponderActive]) // getUserSettings and toast are stable
 
   useEffect(() => {
     if (user) {
