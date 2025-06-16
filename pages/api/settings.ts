@@ -1,49 +1,60 @@
-import { z } from 'zod'
-import { NextApiRequest, NextApiResponse } from 'next'
-import { createRouter } from 'next-connect'
-import { cors, runMiddleware, rateLimiterMiddleware } from '@/lib/middleware'
-import { AppError, errorResponse } from '@/lib/utils/errors'
-import { getUserSettings, updateUserSettings } from '@/lib/services/supabaseService'
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { getAuth } from '@clerk/nextjs/server';
+import { getUserSettings, updateUserSettings } from '@/lib/services/supabaseService';
+import { logger } from '@/lib/utils/logger'; // Assuming logger is setup
 
-const UserSettingsSchema = z.object({
-  user_id: z.string().uuid(),
-  is_responder_active: z.boolean(),
-  message_template: z.string().max(1000)
-})
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { userId } = getAuth(req);
 
-const handler = createRouter<NextApiRequest, NextApiResponse>()
-
-handler.use(async (req: NextApiRequest, res: NextApiResponse, next) => {
-  await runMiddleware(req, res, cors)
-  if (await rateLimiterMiddleware(req, res)) {
-    next()
+  if (!userId) {
+    logger.warn('/api/settings: Unauthorized attempt. No Clerk userId found.');
+    return res.status(401).json({ error: 'Unauthorized' });
   }
-})
 
-handler.get(async (req: NextApiRequest, res: NextApiResponse) => {
+  logger.info(`/api/settings: Request received for user ${userId}, method: ${req.method}`);
+
   try {
-    const userId = req.query.userId as string
-    if (!userId) throw new AppError(400, 'User ID is required')
+    if (req.method === 'GET') {
+      const settings = await getUserSettings(userId);
+      if (settings) {
+        logger.info(`/api/settings: Successfully fetched settings for user ${userId}`);
+        return res.status(200).json(settings);
+      } else {
+        // This case might occur if user_settings row hasn't been created yet
+        // The sync API /api/ensure-user-synced should handle initial creation with defaults.
+        logger.info(`/api/settings: No settings found for user ${userId}, returning default structure or empty.`);
+        // Consider what to return: 404 or default object.
+        // For now, let's assume sync API has run and settings should exist. If not, getUserSettings might throw.
+        // If getUserSettings returns null for no settings (instead of throwing for RLS/other errors):
+        return res.status(200).json({ is_responder_active: false, message_template: '' }); // Or 404
+      }
+    } else if (req.method === 'POST') {
+      const { is_responder_active, message_template } = req.body;
 
-    const data = await getUserSettings(userId)
-    res.status(200).json(data)
-  } catch (error) {
-    errorResponse(res, error as Error | AppError)
-  }
-})
+      // Basic validation
+      if (typeof is_responder_active !== 'boolean' || typeof message_template !== 'string') {
+        logger.warn(`/api/settings: Invalid request body for user ${userId}:`, req.body);
+        return res.status(400).json({ error: 'Invalid request body: is_responder_active (boolean) and message_template (string) are required.' });
+      }
 
-handler.post(async (req: NextApiRequest, res: NextApiResponse) => {
-  try {
-    const validatedData = UserSettingsSchema.parse(req.body)
-    const data = await updateUserSettings(validatedData.user_id, validatedData)
-    res.status(200).json(data)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      errorResponse(res, new AppError(400, 'Invalid input data'))
+      await updateUserSettings(userId, { is_responder_active, message_template });
+      logger.info(`/api/settings: Successfully updated settings for user ${userId}`);
+      return res.status(200).json({ message: 'Settings updated successfully' });
     } else {
-      errorResponse(res, error as Error | AppError)
+      res.setHeader('Allow', ['GET', 'POST']);
+      logger.warn(`/api/settings: Method ${req.method} not allowed for user ${userId}.`);
+      return res.status(405).end(`Method ${req.method} Not Allowed`);
     }
+  } catch (error: any) {
+    logger.error(`/api/settings: Error processing request for user ${userId}:`, error);
+    // Check if error is from Supabase or elsewhere to customize message
+    let statusCode = 500;
+    let message = 'Failed to process settings.';
+    if (error.message && error.message.toLowerCase().includes('failed to fetch')) { // Example check
+        message = 'Failed to retrieve settings from database.';
+    } else if (error.message && error.message.toLowerCase().includes('failed to update')) {
+        message = 'Failed to save settings to database.';
+    }
+    return res.status(statusCode).json({ error: message, details: error.message });
   }
-})
-
-export default handler
+}
