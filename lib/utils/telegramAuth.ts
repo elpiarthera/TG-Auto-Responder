@@ -14,7 +14,7 @@ interface SupabaseUserRecord {
 import { logger } from './logger';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!, // Should be server-side client for this
+  process.env.SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!     // Correct: uses service key
 );
 

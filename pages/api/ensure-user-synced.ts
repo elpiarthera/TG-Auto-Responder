@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (telegramAccount) {
       logger.info(`/api/ensure-user-synced: Found Telegram external account for Clerk ID ${clerkUserId}`, telegramAccount);
-      telegramNumericId = telegramAccount.providerUserId; // This is usually the Telegram numeric ID
+      telegramNumericId = telegramAccount.externalId; // This is usually the Telegram numeric ID
 
       // Clerk might also store email, first/last name, username from the provider.
       // We need to check if externalAccount has specific profile data we prefer over clerkUser root fields.

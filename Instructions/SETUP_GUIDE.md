@@ -120,6 +120,7 @@ This guide provides step-by-step instructions for configuring all necessary serv
 
     *   **Supabase Variables:**
         *   `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase Project URL.
+        *   `SUPABASE_URL`: Your Supabase Project URL (same value as `NEXT_PUBLIC_SUPABASE_URL`, but used server-side).
         *   `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase `anon` `public` key.
         *   `SUPABASE_SERVICE_KEY`: Your Supabase `service_role` `secret` key.
 
